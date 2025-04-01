@@ -1,4 +1,4 @@
-# SAM 2: Segment Anything in Images and Videos
+# SUTTER SAM2
 
 **[AI at Meta, FAIR](https://ai.meta.com/research/)**
 
