@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 APP_ROOT = os.getenv("APP_ROOT", "/opt/sam2")
 
-API_URL = os.getenv("API_URL", "http://3.81.57.196:7263/")
+API_URL = os.getenv("API_URL", "http://54.211.235.192:7263/")
 
 MODEL_SIZE = os.getenv("MODEL_SIZE", "base_plus")
 
