@@ -393,9 +393,11 @@ class SAM2Base(torch.nn.Module):
         # INSERTED DEBUG CODE: Extract and print coordinates from the masks.
         # Convert logits to binary masks using a sigmoid threshold.
         binary_masks = (torch.sigmoid(low_res_masks) > 0.5).float()
+        print(f"Shape[0]: {binary_masks.shape[0]}")
         for i in range(binary_masks.shape[0]):
             # binary_masks[i, 0]: single-channel binary mask for sample i
             coords = torch.nonzero(binary_masks[i, 0])
+            print(f"i:" , i)
             print(f"Sample {i} mask coordinates (rows, cols): {coords}")
         # ============================================
 
