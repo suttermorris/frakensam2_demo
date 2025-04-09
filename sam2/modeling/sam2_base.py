@@ -388,6 +388,14 @@ class SAM2Base(torch.nn.Module):
                 sam_output_token = sam_output_tokens[batch_inds, best_iou_inds]
         else:
             low_res_masks, high_res_masks = low_res_multimasks, high_res_multimasks
+            
+    # INSERTED DEBUG CODE: Extract and print coordinates from the masks.
+    # Convert logits to binary masks using a sigmoid threshold.
+        binary_masks = (torch.sigmoid(low_res_masks) > 0.5).float()
+        for i in range(binary_masks.shape[0]):
+            # binary_masks[i, 0]: single-channel binary mask for sample i
+            coords = torch.nonzero(binary_masks[i, 0])
+            print(f"Sample {i} mask coordinates (rows, cols): {coords}")
 
         # Extract object pointer from the SAM output token (with occlusion handling)
         obj_ptr = self.obj_ptr_proj(sam_output_token)
