@@ -389,16 +389,16 @@ class SAM2Base(torch.nn.Module):
         else:
             low_res_masks, high_res_masks = low_res_multimasks, high_res_multimasks
             
-            # INSERTED DEBUG CODE: Extract and write coordinates from the masks to a file.
+        # ============================================
+        # INSERTED DEBUG CODE: Extract and print coordinates from the masks.
         # Convert logits to binary masks using a sigmoid threshold.
         binary_masks = (torch.sigmoid(low_res_masks) > 0.5).float()
-        # Open the file in append mode so that each call adds to the file.
-        with open("mask_coordinates.txt", "a") as f:
-            for i in range(binary_masks.shape[0]):
-                # binary_masks[i, 0]: single-channel binary mask for sample i
-                coords = torch.nonzero(binary_masks[i, 0])
-                # Write the coordinates to the file. Convert tensor to list for readability.
-                f.write(f"Sample {i} mask coordinates (rows, cols): {coords.tolist()}\n")
+        for i in range(binary_masks.shape[0]):
+            # binary_masks[i, 0]: single-channel binary mask for sample i
+            coords = torch.nonzero(binary_masks[i, 0])
+            print(f"Sample {i} mask coordinates (rows, cols): {coords}")
+        # ============================================
+
 
         # Extract object pointer from the SAM output token (with occlusion handling)
         obj_ptr = self.obj_ptr_proj(sam_output_token)
