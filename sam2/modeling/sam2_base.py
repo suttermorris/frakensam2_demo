@@ -262,8 +262,6 @@ class SAM2Base(torch.nn.Module):
         mask_inputs=None,
         high_res_features=None,
         multimask_output=False,
-        prev_basketball_centroid=None,  # New parameter added
-
     ):
         """
         Forward SAM prompt encoders and mask heads.
@@ -309,20 +307,6 @@ class SAM2Base(torch.nn.Module):
         assert backbone_features.size(1) == self.sam_prompt_embed_dim
         assert backbone_features.size(2) == self.sam_image_embedding_size
         assert backbone_features.size(3) == self.sam_image_embedding_size
-    
-           
-        # ----------------------------------------
-        # Continue with your downstream processing:
-        binary_masks = (torch.sigmoid(low_res_masks) > 0.5).float()
-        scale_factor = self.image_size / (self.sam_image_embedding_size * 4)
-        
-        for i in range(binary_masks.shape[0]):
-            coords_low_res = torch.nonzero(binary_masks[i, 0])
-            coords_image = coords_low_res * scale_factor
-            print(f"Frame {i}: low-res mask coordinates: {coords_low_res.tolist()}")
-            print(f"Frame {i}: corresponding image mask coordinates: {coords_image.tolist()}")
-            
-        # Continue with the rest of your code...
 
         # a) Handle point prompts
         if point_inputs is not None:
@@ -394,8 +378,6 @@ class SAM2Base(torch.nn.Module):
             align_corners=False,
         )
 
-
-        
         sam_output_token = sam_output_tokens[:, 0]
         if multimask_output:
             # take the best mask prediction (with the highest IoU estimation)
@@ -407,6 +389,26 @@ class SAM2Base(torch.nn.Module):
                 sam_output_token = sam_output_tokens[batch_inds, best_iou_inds]
         else:
             low_res_masks, high_res_masks = low_res_multimasks, high_res_multimasks
+            
+        # Inserted debug code: Extract and map low-res mask coordinates to full image coordinates, then print.
+        binary_masks = (torch.sigmoid(low_res_masks) > 0.5).float()
+        # Compute the scaling factor:
+        # The low-resolution masks are produced at 1/4 the resolution of the image after interpolation;
+        # Given that self.image_size is 512 and assuming low-res mask size is 512/4 = 128,
+        # the scale factor is 512 / 128 = 4.
+        scale_factor = self.image_size / (self.sam_image_embedding_size * 4)  # e.g., 512 / 128 = 4
+        
+        # If you have a frame index available (for example, passed in as `frame_idx`), you can print that.
+        # Here we assume that each sample in the batch corresponds to one frame.
+        for i in range(binary_masks.shape[0]):
+            # Calculate the coordinates from the low-resolution mask (assumed single channel).
+            coords_low_res = torch.nonzero(binary_masks[i, 0])
+            # Multiply low-res coordinates to scale them to the full image dimensions.
+            coords_image = coords_low_res * scale_factor
+            # Print the frame and sample information along with the coordinates.
+            # If you have an external frame index available, you could include it here.
+            print(f"Frame {i}: low-res mask coordinates: {coords_low_res.tolist()}")
+            print(f"Frame {i}: corresponding image mask coordinates: {coords_image.tolist()}")
 
 
         # Extract object pointer from the SAM output token (with occlusion handling)
