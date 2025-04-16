@@ -378,32 +378,6 @@ class SAM2Base(torch.nn.Module):
             align_corners=False,
         )
 
-        # Define the distance threshold in pixels.
-distance_threshold = 70.0
-
-# Assume prev_basketball_centroid is provided, e.g.,
-# prev_basketball_centroid = torch.tensor([x_prev, y_prev], device=device)
-
-# For each candidate mask in the batch (if multimask_output is enabled, candidate selection is per frame):
-for i in range(binary_masks.shape[0]):
-    # Here, binary_masks was computed as (torch.sigmoid(low_res_masks) > 0.5)
-    coords_low_res = torch.nonzero(binary_masks[i, 0])
-    if coords_low_res.numel() == 0:
-        continue  # No mask candidate present
-    # Convert the low-resolution coordinates to full image coordinates.
-    coords_image = coords_low_res * scale_factor
-    # Compute the centroid of the candidate mask.
-    centroid = coords_image.float().mean(dim=0)
-    # Compute the Euclidean distance to the previous basketball centroid.
-    distance = torch.norm(centroid - prev_basketball_centroid)
-    # If the centroid is too far away, eliminate this candidate.
-    if distance > distance_threshold:
-        print(f"Frame {i}: Candidate mask eliminated, distance {distance.item():.2f} exceeds threshold {distance_threshold}")
-        # Here, you might set its score to a low value so it won’t be selected:
-        # Option 1: Overwrite the mask logits.
-        low_res_multimasks[i] = NO_OBJ_SCORE
-        # Option 2: If using IoU predictions, set its IoU score low.
-        # ious[i] = -1024.0
 
         
         sam_output_token = sam_output_tokens[:, 0]
@@ -437,6 +411,19 @@ for i in range(binary_masks.shape[0]):
             # If you have an external frame index available, you could include it here.
             print(f"Frame {i}: low-res mask coordinates: {coords_low_res.tolist()}")
             print(f"Frame {i}: corresponding image mask coordinates: {coords_image.tolist()}")
+# ----- Begin Candidate Filtering Block -----
+            # Check if there are any mask pixels.
+            if coords_low_res.numel() > 0:
+                # Compute the centroid of the candidate mask.
+                centroid = coords_image.float().mean(dim=0)
+                # Compute the Euclidean distance from this centroid to the previous basketball centroid.
+                distance = torch.norm(centroid - prev_basketball_centroid)
+                # If the candidate mask is outside the 70-pixel threshold, discard it.
+                if distance > 70.0:
+                    print(f"Frame {i}: Candidate mask eliminated, distance {distance.item():.2f} exceeds 70 pixels")
+                    # Overwrite candidate's logits so it won't be selected (or adjust IoU scores if using those).
+                    low_res_multimasks[i] = NO_OBJ_SCORE
+            # ----- End Candidate Filtering Block -----
 
 
         # Extract object pointer from the SAM output token (with occlusion handling)
