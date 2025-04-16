@@ -399,6 +399,7 @@ class SAM2Base(torch.nn.Module):
         # Given that self.image_size is 512 and assuming low-res mask size is 512/4 = 128,
         # the scale factor is 512 / 128 = 4.
         scale_factor = self.image_size / (self.sam_image_embedding_size * 4)  # e.g., 512 / 128 = 4
+        print(f"prev_basketball_centroid: {prev_basketball_centroid}")
         
         # If you have a frame index available (for example, passed in as `frame_idx`), you can print that.
         # Here we assume that each sample in the batch corresponds to one frame.
