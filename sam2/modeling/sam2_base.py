@@ -310,17 +310,11 @@ class SAM2Base(torch.nn.Module):
         assert backbone_features.size(2) == self.sam_image_embedding_size
         assert backbone_features.size(3) == self.sam_image_embedding_size
     
-            # Ensure prev_basketball_centroid is provided or set a default:
-        if prev_basketball_centroid is None:
-            # Set a fallback value; adjust as needed
-            prev_basketball_centroid = torch.tensor([256, 256], device=device)
-        
+           
+        # ----------------------------------------
         # Continue with your downstream processing:
         binary_masks = (torch.sigmoid(low_res_masks) > 0.5).float()
         scale_factor = self.image_size / (self.sam_image_embedding_size * 4)
-        
-        # Debug print to check the value
-        print(f"prev_basketball_centroid: {prev_basketball_centroid}")
         
         for i in range(binary_masks.shape[0]):
             coords_low_res = torch.nonzero(binary_masks[i, 0])
@@ -328,13 +322,6 @@ class SAM2Base(torch.nn.Module):
             print(f"Frame {i}: low-res mask coordinates: {coords_low_res.tolist()}")
             print(f"Frame {i}: corresponding image mask coordinates: {coords_image.tolist()}")
             
-            # Candidate filtering block:
-            if coords_low_res.numel() > 0:
-                centroid = coords_image.float().mean(dim=0)
-                distance = torch.norm(centroid - prev_basketball_centroid)
-                if distance > 70.0:
-                    print(f"Frame {i}: Candidate mask eliminated, distance {distance.item():.2f} exceeds 70 pixels")
-                    low_res_multimasks[i] = NO_OBJ_SCORE
         # Continue with the rest of your code...
 
         # a) Handle point prompts
